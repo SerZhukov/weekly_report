@@ -14,13 +14,13 @@ SOURCES += \
     export.cpp \
     main.cpp \
     mainwindow.cpp \
-    progress.cpp
+    word.cpp
 
 HEADERS += \
     GenerateConclusions.h \
     export.h \
     mainwindow.h \
-    progress.h
+    word.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

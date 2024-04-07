@@ -12,6 +12,11 @@ GenerateConclusions::GenerateConclusions(QWidget *parent) : QWidget(parent)
 
 }
 
+GenerateConclusions::~GenerateConclusions()
+{
+
+}
+
 void GenerateConclusions::select_files()
 {
     choose_files = new QFileDialog(this, "Select files",
@@ -22,8 +27,7 @@ void GenerateConclusions::select_files()
     {
         list_files = choose_files->selectedFiles();
         exp = new Export(this);
-        connect(this, &GenerateConclusions::give_path, exp, &Export::export_office);
-        emit give_path(list_files);
+        exp->export_office(list_files);
     }
     else
     {

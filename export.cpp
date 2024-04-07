@@ -1,105 +1,112 @@
-#ifndef EXPORT_TO_OFFICE_H
-#define EXPORT_TO_OFFICE_H
 #include <QWidget>
 #include "export.h"
 #include <QAxObject>
 #include <QFileDialog>
 #include <QApplication>
+#include <QMessageBox>
+#include <QProgressDialog>
 
-Export::Export(QWidget *parent)
-    : QWidget(parent)
+
+
+Export::Export(QObject* parent) : QObject(parent)
+
 {
-    progress_bar = new Progress(this);
-    progress_bar->setWindowFlags(Qt::Window);
-    progress_bar->setRange(0, 100);
+
+    word = new Word;
+    progress_bar = new QProgressDialog();
+    progress_bar->close();
     progress_bar->setAutoClose(false);
     progress_bar->setAutoReset(false);
     progress_bar->setWindowModality(Qt::ApplicationModal);
-    connect(this, &Export::give_progress, progress_bar, &Progress::setValue);
-    connect(this, &Export::start_progress, this, [this] ()
-            {progress_bar->show();});
+    progress_bar->setFixedSize(600, 100);
+    connect(this, &Export::give_prog,  progress_bar, &QProgressDialog::setValue);
+    connect(this, &Export::give_msg,  progress_bar, &QProgressDialog::setLabelText);
+    connect(this, &Export::show_prog,  progress_bar, &QProgressDialog::show);
 }
+
 
 Export::~Export()
 {
-    delete progress_bar;
+    delete word;
+    //delete progress_bar;
 }
 
 void Export::export_office(const QStringList& path)
     {
-        emit start_progress();
-        qApp->processEvents();
-        progress_bar->setText("Create word document");
-        qDebug() << "Create word document";
-        QAxObject* word =  new QAxObject( "Word.Application", nullptr);
-        QAxObject* documents = word->querySubObject("Documents");
-        QAxObject *document = documents->querySubObject("Add()");
-        QAxObject* range_word = document->querySubObject("Range()");
-
-        int value_progress = 5;
-        emit give_progress(value_progress);
-
-        progress_bar->setText("Create excel document");
-        qDebug() << "Create excel document";
-        QAxObject* excel = new QAxObject( "Excel.Application");
-        QAxObject* workbooks = excel->querySubObject("Workbooks");
-        value_progress += 5;
-        emit give_progress(value_progress);
-
-        qDebug() << "Start export";
-
-        int step_progress = 90/path.count();
-
-        for (qptrdiff i = 0; i < path.count(); ++i )
+        //qApp->processEvents();
+        //progress_bar->show();
+        emit show_prog();
+        //progress_bar->setLabelText("Waiting...");
+        emit give_msg("Waiting...");
+        if(word->isNull())
         {
-            qDebug() << "Export:" << path[i];
-            progress_bar->setText("Start export " + path[i]);
+            QMessageBox::information(nullptr, "weekly report", "Error opening excel.");
+            return;
+        }
+        else
+        {
+            word->create_document();
+        }
+
+        QAxObject* excel = new QAxObject( "Excel.Application");
+        if(excel->isNull())
+        {
+            qDebug() << "Error opening excel";
+            return;
+        }
+        QAxObject* workbooks = excel->querySubObject("Workbooks");
+        double value_progress = 0;
+        //progress_bar->setValue(value_progress);
+        emit give_prog(value_progress);
+        double step_progress = 100.0/path.count();
+        for (qsizetype i = 0; i < path.count(); ++i )
+        {
+            //progress_bar->setLabelText("Export " + path[i]);
+            emit give_msg("Export " + path[i]);
             QAxObject* workbook = workbooks->querySubObject("Open(const QString&)", path[i]);
             QAxObject* worksheets = workbook->querySubObject("Worksheets(int)", 1);
             QAxObject* range = worksheets->querySubObject("UsedRange");
             QAxObject *foundCell_1 = range->querySubObject("Find(const QString&)", "Вывод:");
             if(!foundCell_1)
             {
-                qDebug() << "Value no find";
-                progress_bar->setText("Value no find: " + path[i]);
+                //progress_bar->setLabelText("Value no find: " + path[i]);
+                emit give_msg("Value no find: " + path[i]);
                 workbook->dynamicCall("Close()");
                 value_progress += step_progress;
-                emit give_progress(value_progress);
+                //progress_bar->setValue(value_progress);
+                emit give_prog(value_progress);
                 continue;
             }
             QAxObject *foundCell_2 = foundCell_1->querySubObject("Offset(int, int)", 1, 0);
             QString value = foundCell_2->dynamicCall("Value").toString();
-            range_word->dynamicCall("InsertAfter(const QString&)", value);
+            word->add_text(value);
+           // range_word->dynamicCall("InsertAfter(const QString&)", value);
             workbook->dynamicCall("Close()");
-            qDebug() << "Comleted export:" << path[i];
             value_progress += step_progress;
-            emit give_progress(value_progress);
-            progress_bar->setText("Completed export " + path[i]);
+            //progress_bar->setValue(value_progress);
+            emit give_prog(value_progress);
+
         }
+        //progress_bar->setLabelText("Completed");
+        emit give_msg("Completed");
+        value_progress = 100;
+        //progress_bar->setValue(value_progress);
+        emit give_prog(value_progress);
         QString save_path;
         save_path = QFileDialog::getSaveFileName(nullptr,
                                                  "Сохранить выводы", "C://", "Word (*.docx *doc)");
         if(save_path != "")
         {
-            document->dynamicCall("SaveAs(const QString&)", save_path);
+
+            word->save(save_path);
         }
         else
         {
-            qDebug() << "No save path selected";
-            document->dynamicCall("Close(wdDoNotSaveChanges)");
-
+            //progress_bar->setLabelText("No selected path save");
+            emit give_msg("No selected path save");
+            word->close();
         }
-        qDebug() << "Start exit excel";
         excel->dynamicCall("Quit()");
-        qDebug() << "Finish exit excel";
-        qDebug() << "Start exit word";
 
-        word->dynamicCall("Quit()");
-        qDebug() << "Finish exit word";
-        progress_bar->setText("Completed");
-        value_progress = 100;
-        emit give_progress(value_progress);
-
-        qDebug() << "Finish";
     }
-#endif // EXPORT_TO_OFFICE_H
+

@@ -14,9 +14,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     setCentralWidget(main_widget);
     this->resize(400, 400);
     connect(btn_quit, &QPushButton::clicked, qApp->quit);
-    connect(btn_gen_concl, &QPushButton::clicked, [](){
+    connect(btn_gen_concl, &QPushButton::clicked, this, [](){
         GenerateConclusions* w = new GenerateConclusions();
-        w->show();   
+        w->select_files();
+        delete w;
     });
 
 }

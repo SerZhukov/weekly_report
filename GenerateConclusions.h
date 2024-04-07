@@ -13,6 +13,7 @@ class GenerateConclusions : public QWidget
     Q_OBJECT
 public:
     GenerateConclusions(QWidget* parent = nullptr);
+    ~GenerateConclusions();
 private:
      QVBoxLayout* vbox = nullptr;
      QPushButton* btn_gen_concl  = nullptr;
@@ -20,7 +21,7 @@ private:
      QStringList list_files;
      Export* exp = nullptr;
 
- private slots:
+ public slots:
     void select_files();
  signals:
      void give_path(const QStringList&);
