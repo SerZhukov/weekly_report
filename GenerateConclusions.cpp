@@ -1,4 +1,5 @@
 #include "GenerateConclusions.h"
+#include <QProgressDialog>
 
 
 GenerateConclusions::GenerateConclusions(QWidget *parent) : QWidget(parent)
@@ -9,7 +10,6 @@ GenerateConclusions::GenerateConclusions(QWidget *parent) : QWidget(parent)
     setLayout(vbox);
     resize(300, 300);
     connect(btn_gen_concl, &QPushButton::clicked, this, &GenerateConclusions::select_files);
-
 }
 
 GenerateConclusions::~GenerateConclusions()
@@ -26,8 +26,10 @@ void GenerateConclusions::select_files()
     if(choose_files->exec())
     {
         list_files = choose_files->selectedFiles();
-        exp = new Export(this);
+        qDebug() << "Thread class GenerateConclusions is " << QThread::currentThreadId();
+        exp = new ExpotThread;
         exp->export_office(list_files);
+        qDebug() << "exp->export_office(list_files);";
     }
     else
     {

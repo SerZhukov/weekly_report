@@ -12,6 +12,8 @@ CONFIG += c++17
 SOURCES += \
     GenerateConclusions.cpp \
     export.cpp \
+    expotthread.cpp \
+    filedialog.cpp \
     main.cpp \
     mainwindow.cpp \
     word.cpp
@@ -19,6 +21,8 @@ SOURCES += \
 HEADERS += \
     GenerateConclusions.h \
     export.h \
+    expotthread.h \
+    filedialog.h \
     mainwindow.h \
     word.h
 

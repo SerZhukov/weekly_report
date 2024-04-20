@@ -4,7 +4,7 @@
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QFileDialog>
-#include "export.h"
+#include "expotthread.h"
 
 
 
@@ -19,7 +19,7 @@ private:
      QPushButton* btn_gen_concl  = nullptr;
      QFileDialog* choose_files = nullptr;
      QStringList list_files;
-     Export* exp = nullptr;
+     ExpotThread* exp = nullptr;
 
  public slots:
     void select_files();
